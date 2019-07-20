@@ -1,0 +1,34 @@
+---
+- name: install prerequisite packages
+  yum:
+    name: nfs-utils
+    state: present
+
+- name:  install docker-volume-netshare
+  get_url: 
+    url: "https://github.com/ContainX/docker-volume-netshare/releases/download/v0.35/docker-volume-netshare_0.35_linux_amd64-bin"
+    dest: /usr/bin/docker-volume-netshare
+  register: get_netshare
+
+- name: chmod docker-volume-netshare
+  file:
+    path: /usr/bin/docker-volume-netshare
+    mode: "a+x"
+  when: get_netshare.changed
+
+- name: copy /etc/sysconfig/docker-volume-netshare
+  copy:
+    src: ./files/etc/sysconfig/docker-volume-netshare
+    dest: /etc/sysconfig/docker-volume-netshare
+    
+- name: copy /etc/systemd/system/docker-volume-netshare
+  copy: 
+    src: ./files/etc/systemd/system/docker-volume-netshare.service
+    dest: /etc/systemd/system/docker-volume-netshare.service
+
+- name: restart docker-volume-netshare
+  systemd:
+    name: docker-volume-netshare.service
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
